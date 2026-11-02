@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { 
   LogOut, UploadCloud, BarChart3, Brain, Settings, 
-  Send, MessageCircle, X, Menu, ChevronLeft, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp
+  Send, MessageCircle, X, Menu, ChevronLeft, ArrowUpRight, ArrowDownRight, ChevronDown, ChevronUp, Download
 } from "lucide-react";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false });
@@ -22,7 +22,11 @@ export default function Workspace() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResponse, setAiResponse] = useState<any>(null);
-  const [expandedChartIndex, setExpandedChartIndex] = useState<number | null>(null); // For Read More
+  const [expandedChartIndex, setExpandedChartIndex] = useState<number | null>(null); 
+  const [isDownloading, setIsDownloading] = useState(false); // For download state
+
+  // Ref for the report container
+  const reportRef = useRef<HTMLDivElement>(null);
 
   // Chatbot State
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -39,6 +43,35 @@ export default function Workspace() {
 
   const handleExit = () => {
     router.push("/");
+  };
+
+  // --- DOWNLOAD REPORT LOGIC ---
+  const handleDownload = async () => {
+    if (!reportRef.current) return;
+    setIsDownloading(true);
+
+    try {
+      // Dynamic import to avoid server-side rendering issues
+      const html2pdf = (await import("html2pdf.js")).default;
+      
+      const element = reportRef.current;
+      
+      const opt = {
+        margin:       0.5,
+        filename:     `DAANL_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      // Generate and save PDF
+      await html2pdf().set(opt).from(element).save();
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Failed to download report. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   // --- THE INTELLIGENT AI ENGINE ---
@@ -58,7 +91,7 @@ export default function Workspace() {
         }
 
         const columns = Object.keys(data[0]);
-        const sampleRows = data.slice(0, 10); // Send 10 rows for better context
+        const sampleRows = data.slice(0, 10); 
 
         try {
           const apiKey = process.env.NEXT_PUBLIC_GROQ_API_KEY;
@@ -80,23 +113,15 @@ export default function Workspace() {
                   Return a JSON object with exactly these keys:
                   
                   1. "domain": A short string guessing the industry (e.g., "Healthcare", "HR", "Finance").
-                  
                   2. "summary": A 2-3 sentence paragraph explaining the dataset and a specific business decision.
-                  
                   3. "kpis": An array of exactly 3 objects. Include advanced statistics if numeric columns exist. Each object needs:
                      - "title": (e.g., "Total Revenue", "Average Age", "Std Dev Salary", "Total Rows").
                      - "value": The calculated number, rounded to 2 decimal places.
                      - "trend": "up" or "down" (simulate this if not enough data).
                      - "trendValue": (e.g., "+5%").
-                     
                   4. "charts": An array of 2 to 6 objects. DO NOT FORCE CHARTS. Only generate charts that the data actually supports.
                      Available types: "bar", "line", "pie", "donut", "scatter", "histogram", "box", "violin", "area", "bubble".
-                     Each chart object must have:
-                     - "title": Descriptive title.
-                     - "type": From the list above.
-                     - "x": Column name for x-axis or labels.
-                     - "y": Column name for y-axis or values.
-                     - "explanation": A highly detailed, 2-paragraph explanation of what this specific chart means, the insights it reveals, and the business decisions it implies.
+                     Each chart object must have: "title", "type", "x", "y", and "explanation" (a detailed 2-paragraph explanation).
                   
                   Return ONLY valid JSON. Be mathematically accurate.`
                 },
@@ -122,7 +147,6 @@ export default function Workspace() {
 
             let plotData: any = {};
 
-            // Rendering logic for the expanded list of charts
             if (chart.type === "bar") {
               plotData = { x: xData.slice(0, 12), y: yData.slice(0, 12), type: "bar", marker: { color: "#111111", cornerradius: 4 } };
             } else if (chart.type === "line" || chart.type === "area") {
@@ -136,20 +160,19 @@ export default function Workspace() {
             } else if (chart.type === "box" || chart.type === "violin") {
               plotData = { y: yData, type: chart.type, marker: { color: "#111111" }, box: { visible: false }, meanline: { visible: true } };
             } else {
-              // Fallback if AI hallucinates a type
               plotData = { x: xData.slice(0, 12), y: yData.slice(0, 12), type: "bar", marker: { color: "#111111", cornerradius: 4 } };
             }
 
             return {
               title: chart.title,
               type: chart.type,
-              explanation: chart.explanation, // 2 paragraph AI explanation
+              explanation: chart.explanation, 
               data: [plotData],
               layout: {
                 autosize: true, 
                 margin: { t: 10, b: 50, l: 40, r: 20 },
-                paper_bgcolor: "transparent", 
-                plot_bgcolor: "transparent",
+                paper_bgcolor: "#ffffff", // Forced white background for PDF
+                plot_bgcolor: "#ffffff",
                 font: { family: "Inter, sans-serif", color: "#64748B", size: 11 },
                 xaxis: { showgrid: false, zeroline: false },
                 yaxis: { showgrid: true, gridcolor: "#F1F5F9", zeroline: false },
@@ -170,7 +193,6 @@ export default function Workspace() {
           console.error("AI Error:", error);
           alert("AI failed. Using basic fallback.");
           
-          // Fallback
           const numCols = columns.filter(c => !isNaN(parseFloat(data[0][c])));
           const strCols = columns.filter(c => isNaN(parseFloat(data[0][c])));
           const x = strCols[0] || columns[0];
@@ -187,9 +209,9 @@ export default function Workspace() {
             charts: [{
               title: `${y1} by ${x}`,
               type: "bar",
-              explanation: "This is a fallback chart because the AI service is currently offline. It shows the first text column compared to the first numeric column. Please check your API key to unlock deep 2-paragraph explanations.",
+              explanation: "This is a fallback chart because the AI service is currently offline. It shows the first text column compared to the first numeric column.",
               data: [{ x: data.slice(0, 10).map(r => r[x]), y: data.slice(0, 10).map(r => parseFloat(r[y1]) || 0), type: "bar", marker: { color: "#111111", cornerradius: 4 } }],
-              layout: { autosize: true, margin: { t: 10, b: 50, l: 40, r: 20 }, paper_bgcolor: "transparent", plot_bgcolor: "transparent", font: { color: "#64748B" }, showlegend: true }
+              layout: { autosize: true, margin: { t: 10, b: 50, l: 40, r: 20 }, paper_bgcolor: "#ffffff", plot_bgcolor: "#ffffff", font: { color: "#64748B" }, showlegend: true }
             }]
           });
         } finally {
@@ -261,11 +283,11 @@ export default function Workspace() {
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 240, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
-            className="bg-white border-r border-[#E2E8F0] flex flex-col justify-between hidden md:flex overflow-hidden whitespace-nowrap z-20"
+            className="bg-white border-r border-[#E2E8F0] flex flex-col justify-between hidden md:flex overflow-hidden whitespace-nowrap z-20 print:hidden"
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-10">
-                <img src="/logo.svg" alt="Logo" className="h-6 cursor-pointer" onClick={handleExit} />
+                <img src="/logo.jpeg" alt="Logo" className="h-6 cursor-pointer" onClick={handleExit} />
                 <button onClick={() => setIsSidebarOpen(false)} className="p-1 rounded-md text-slate-400 hover:bg-[#F1F5F9] hover:text-black transition">
                   <ChevronLeft className="w-5 h-5" />
                 </button>
@@ -286,7 +308,7 @@ export default function Workspace() {
       <div className="flex-grow flex flex-col min-w-0">
         
         {/* TOP BAR */}
-        <div className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+        <div className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 print:hidden">
           <div className="flex items-center gap-4">
             {!isSidebarOpen && (
               <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg text-slate-500 hover:bg-[#F1F5F9] hover:text-black transition">
@@ -302,12 +324,12 @@ export default function Workspace() {
         </div>
 
         {/* WORKSPACE AREA */}
-        <div className="p-6 md:p-10 max-w-6xl w-full mx-auto overflow-y-auto h-[calc(100vh-64px)]">
+        <div className="p-6 md:p-10 max-w-6xl w-full mx-auto overflow-y-auto h-[calc(100vh-64px)] print:h-auto print:overflow-visible">
           
           {activeTab === "dashboard" && (
             <>
               {!aiResponse && !isAnalyzing ? (
-                <div className="max-w-xl mx-auto mt-12 text-center">
+                <div className="max-w-xl mx-auto mt-12 text-center print:hidden">
                   <h2 className="text-3xl font-extrabold tracking-tight text-black mb-2">Workspace.</h2>
                   <p className="text-slate-500 mb-8 text-sm">Upload your data file to generate intelligent, minimalist insights.</p>
                   
@@ -326,7 +348,7 @@ export default function Workspace() {
                   </div>
                 </div>
               ) : isAnalyzing ? (
-                <div className="text-center mt-24">
+                <div className="text-center mt-24 print:hidden">
                   <div className="w-16 h-16 bg-white border border-[#E2E8F0] text-black rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse shadow-sm">
                     <Brain className="w-8 h-8" />
                   </div>
@@ -334,20 +356,31 @@ export default function Workspace() {
                   <p className="text-sm text-slate-500">Calculating standard deviations, variances, and generating tailored insights.</p>
                 </div>
               ) : (
-                <div className="space-y-6">
+                // REPORT CONTAINER STARTS HERE
+                <div ref={reportRef} className="space-y-6 bg-[#F8FAFC] p-2 print:p-0">
                   
-                  {/* HEADER */}
+                  {/* HEADER & DOWNLOAD BUTTON */}
                   <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-2">
                     <div>
                       <h2 className="text-2xl font-extrabold text-black tracking-tight">Analytics Dashboard</h2>
                       <p className="text-slate-500 text-xs mt-1">Industry Detected: <span className="text-black font-bold bg-[#F1F5F9] px-2 py-0.5 rounded-md">{aiResponse.domain}</span></p>
                     </div>
-                    <button onClick={() => { setAiResponse(null); setSelectedFile(null); setExpandedChartIndex(null); }} className="text-xs font-bold text-black bg-white px-4 py-2 rounded-lg border border-[#E2E8F0] shadow-sm hover:bg-[#F8FAFC] transition">
-                      Upload New File
-                    </button>
+                    
+                    <div className="flex items-center gap-3 print:hidden">
+                      <button 
+                        onClick={handleDownload} 
+                        disabled={isDownloading}
+                        className="text-xs font-bold text-white bg-black px-4 py-2 rounded-lg shadow-sm hover:bg-slate-800 transition flex items-center gap-2 disabled:opacity-50"
+                      >
+                        {isDownloading ? "Generating PDF..." : <><Download className="w-4 h-4" /> Download Report</>}
+                      </button>
+                      <button onClick={() => { setAiResponse(null); setSelectedFile(null); setExpandedChartIndex(null); }} className="text-xs font-bold text-black bg-white px-4 py-2 rounded-lg border border-[#E2E8F0] shadow-sm hover:bg-[#F8FAFC] transition">
+                        Upload New File
+                      </button>
+                    </div>
                   </div>
 
-                  {/* KPI CARDS (Includes Variance, Std Dev, Averages) */}
+                  {/* KPI CARDS */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {aiResponse.kpis.map((kpi: any, i: number) => (
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} key={i} className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-sm relative overflow-hidden">
@@ -387,7 +420,7 @@ export default function Workspace() {
                     </div>
                   </motion.div>
 
-                  {/* DYNAMIC CHARTS GRID WITH READ MORE */}
+                  {/* DYNAMIC CHARTS GRID */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {aiResponse.charts.map((chart: any, i: number) => {
                       const isLarge = i === 0; 
@@ -406,19 +439,17 @@ export default function Workspace() {
                             <span className="text-[9px] font-bold text-slate-400 bg-[#F8FAFC] px-2 py-0.5 rounded border border-[#E2E8F0] uppercase tracking-wider shrink-0">{chart.type}</span>
                           </div>
                           
-                          {/* Chart */}
                           <div className={`w-full ${isLarge ? 'h-[300px]' : 'h-[220px]'}`}>
                             <Plot data={chart.data} layout={chart.layout} useResizeHandler={true} style={{ width: "100%", height: "100%" }} config={{ displayModeBar: false }} />
                           </div>
 
-                          {/* AI Explanation with Read More */}
                           <div className="mt-4 pt-3 border-t border-[#F1F5F9]">
                             <p className={`text-xs text-slate-600 leading-relaxed transition-all ${isExpanded ? '' : 'line-clamp-2'}`}>
                               {chart.explanation}
                             </p>
                             <button 
                               onClick={() => setExpandedChartIndex(isExpanded ? null : i)}
-                              className="text-[10px] font-bold text-black mt-2 flex items-center gap-1 hover:underline"
+                              className="text-[10px] font-bold text-black mt-2 flex items-center gap-1 hover:underline print:hidden"
                             >
                               {isExpanded ? <><ChevronUp className="w-3 h-3" /> Read Less</> : <><ChevronDown className="w-3 h-3" /> Read Full AI Analysis</>}
                             </button>
@@ -432,13 +463,13 @@ export default function Workspace() {
             </>
           )}
 
-          {activeTab === "settings" && <div className="text-center mt-24 text-slate-400"><Settings className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="text-sm font-medium">Account settings coming soon.</p></div>}
+          {activeTab === "settings" && <div className="text-center mt-24 text-slate-400 print:hidden"><Settings className="w-12 h-12 mx-auto mb-4 opacity-50" /><p className="text-sm font-medium">Account settings coming soon.</p></div>}
 
         </div>
       </div>
 
       {/* FLOATING CHATBOT */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end print:hidden">
         <AnimatePresence>
           {isChatOpen && (
             <motion.div initial={{ opacity: 0, y: 20, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 20, scale: 0.95 }} className="mb-4 w-[340px] bg-white border border-[#E2E8F0] rounded-2xl shadow-xl overflow-hidden flex flex-col">
@@ -451,7 +482,6 @@ export default function Workspace() {
                   <div key={i} className={`max-w-[85%] p-3 rounded-xl text-xs font-medium ${msg.sender === "user" ? "bg-black text-white self-end rounded-br-none" : "bg-[#F1F5F9] text-black self-start rounded-bl-none"}`}>{msg.text}</div>
                 ))}
                 
-                {/* AI Typing Indicator */}
                 {isChatLoading && (
                   <div className="bg-[#F1F5F9] text-black self-start rounded-bl-none p-3 rounded-xl text-xs font-medium animate-pulse">
                     AI is typing...

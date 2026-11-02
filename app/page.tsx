@@ -31,7 +31,7 @@ export default function LandingPage() {
   if (isLoading) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-gray-50 dark:bg-[#0B1120] z-[100]">
-        <motion.img src="/logo.svg" alt="DAANL Logo" className="w-16 h-16 object-contain dark:brightness-0 dark:invert" animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} />
+        <motion.img src="/logo.jpeg" alt="DAANL Logo" className="w-16 h-16 object-contain dark:brightness-0 dark:invert" animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} />
         <p className="mt-4 text-xs font-mono tracking-widest text-gray-500 uppercase">Loading DAANL...</p>
       </div>
     );
@@ -48,7 +48,7 @@ export default function LandingPage() {
 
       {/* TOP NAVIGATION */}
       <nav className="relative z-40 flex justify-between items-center p-8 md:p-12">
-        <img src="/logo.svg" alt="DAANL Logo" className="h-8 w-auto dark:brightness-0 dark:invert transition-all" />
+        <img src="/logo.jpeg" alt="DAANL Logo" className="h-8 w-auto dark:brightness-0 dark:invert transition-all" />
         <div className="flex items-center gap-4">
           <button onClick={() => setTheme(theme === "light" ? "dark" : "light")} className="p-2 rounded-full bg-gray-200 dark:bg-white/10 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-white/20 transition-all">
             {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -113,7 +113,7 @@ export default function LandingPage() {
           <footer className="bg-black dark:bg-white text-white dark:text-black rounded-3xl p-10 md:p-16 shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
               <div className="col-span-1 md:col-span-2">
-                <img src="/logo.svg" alt="DAANL Logo" className="h-8 w-auto mb-4 brightness-0 invert dark:brightness-100 dark:invert-0" />
+                <img src="/logo.jpeg" alt="DAANL Logo" className="h-8 w-auto mb-4 brightness-0 invert dark:brightness-100 dark:invert-0" />
                 <p className="text-gray-400 dark:text-gray-600 max-w-sm mb-6">The intelligent, automated data analysis platform. Upload your files and get instant, beautiful insights powered by AI.</p>
                 <div className="flex gap-4">
                   <a href="#" className="p-2 bg-white/10 dark:bg-black/10 rounded-full hover:bg-white/20 dark:hover:bg-black/20 transition"><Globe className="w-4 h-4" /></a>
