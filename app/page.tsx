@@ -109,11 +109,14 @@ export default function LandingPage() {
             </div>
           </motion.div>
 
-          {/* FOOTER */}
+                    {/* FOOTER */}
           <footer className="bg-black dark:bg-white text-white dark:text-black rounded-3xl p-10 md:p-16 shadow-2xl">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-12 md:gap-8">
               <div className="col-span-1 md:col-span-2">
-                <img src="/logo.jpeg" alt="DAANL Logo" className="h-8 w-auto mb-4 brightness-0 invert dark:brightness-100 dark:invert-0" />
+                {/* Replaced Image with Text Logo */}
+                <h2 className="text-3xl font-extrabold tracking-tighter mb-4 text-white dark:text-black">
+                  DAANL.
+                </h2>
                 <p className="text-gray-400 dark:text-gray-600 max-w-sm mb-6">The intelligent, automated data analysis platform. Upload your files and get instant, beautiful insights powered by AI.</p>
                 <div className="flex gap-4">
                   <a href="#" className="p-2 bg-white/10 dark:bg-black/10 rounded-full hover:bg-white/20 dark:hover:bg-black/20 transition"><Globe className="w-4 h-4" /></a>
