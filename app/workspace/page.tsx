@@ -23,9 +23,8 @@ export default function Workspace() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiResponse, setAiResponse] = useState<any>(null);
   const [expandedChartIndex, setExpandedChartIndex] = useState<number | null>(null); 
-  const [isDownloading, setIsDownloading] = useState(false); // For download state
+  const [isDownloading, setIsDownloading] = useState(false);
 
-  // Ref for the report container
   const reportRef = useRef<HTMLDivElement>(null);
 
   // Chatbot State
@@ -51,20 +50,17 @@ export default function Workspace() {
     setIsDownloading(true);
 
     try {
-      // Dynamic import to avoid server-side rendering issues
       const html2pdf = (await import("html2pdf.js")).default;
-      
       const element = reportRef.current;
       
       const opt = {
         margin:       0.5,
         filename:     `DAANL_Report_${new Date().toISOString().split('T')[0]}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
+        image:        { type: 'jpeg' as const, quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true, logging: false },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' as const }
       };
 
-      // Generate and save PDF
       await html2pdf().set(opt).from(element).save();
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -111,19 +107,11 @@ export default function Workspace() {
                   role: "system",
                   content: `You are a highly rigorous Senior Data Scientist. Analyze the provided CSV columns and sample data.
                   Return a JSON object with exactly these keys:
-                  
-                  1. "domain": A short string guessing the industry (e.g., "Healthcare", "HR", "Finance").
+                  1. "domain": A short string guessing the industry.
                   2. "summary": A 2-3 sentence paragraph explaining the dataset and a specific business decision.
-                  3. "kpis": An array of exactly 3 objects. Include advanced statistics if numeric columns exist. Each object needs:
-                     - "title": (e.g., "Total Revenue", "Average Age", "Std Dev Salary", "Total Rows").
-                     - "value": The calculated number, rounded to 2 decimal places.
-                     - "trend": "up" or "down" (simulate this if not enough data).
-                     - "trendValue": (e.g., "+5%").
-                  4. "charts": An array of 2 to 6 objects. DO NOT FORCE CHARTS. Only generate charts that the data actually supports.
-                     Available types: "bar", "line", "pie", "donut", "scatter", "histogram", "box", "violin", "area", "bubble".
-                     Each chart object must have: "title", "type", "x", "y", and "explanation" (a detailed 2-paragraph explanation).
-                  
-                  Return ONLY valid JSON. Be mathematically accurate.`
+                  3. "kpis": An array of exactly 3 objects with "title", "value", "trend" ("up" or "down"), and "trendValue".
+                  4. "charts": An array of 2 to 6 objects. Available types: "bar", "line", "pie", "donut", "scatter", "histogram", "box", "violin", "area", "bubble". Each chart needs "title", "type", "x", "y", and "explanation" (2 paragraphs).
+                  Return ONLY valid JSON.`
                 },
                 {
                   role: "user",
@@ -171,7 +159,7 @@ export default function Workspace() {
               layout: {
                 autosize: true, 
                 margin: { t: 10, b: 50, l: 40, r: 20 },
-                paper_bgcolor: "#ffffff", // Forced white background for PDF
+                paper_bgcolor: "#ffffff",
                 plot_bgcolor: "#ffffff",
                 font: { family: "Inter, sans-serif", color: "#64748B", size: 11 },
                 xaxis: { showgrid: false, zeroline: false },
@@ -209,7 +197,7 @@ export default function Workspace() {
             charts: [{
               title: `${y1} by ${x}`,
               type: "bar",
-              explanation: "This is a fallback chart because the AI service is currently offline. It shows the first text column compared to the first numeric column.",
+              explanation: "This is a fallback chart because the AI service is currently offline.",
               data: [{ x: data.slice(0, 10).map(r => r[x]), y: data.slice(0, 10).map(r => parseFloat(r[y1]) || 0), type: "bar", marker: { color: "#111111", cornerradius: 4 } }],
               layout: { autosize: true, margin: { t: 10, b: 50, l: 40, r: 20 }, paper_bgcolor: "#ffffff", plot_bgcolor: "#ffffff", font: { color: "#64748B" }, showlegend: true }
             }]
@@ -251,7 +239,7 @@ export default function Workspace() {
           messages: [
             {
               role: "system",
-              content: "You are the helpful AI support assistant for DAANL. Users upload CSV files and you generate charts. Keep answers brief and friendly."
+              content: "You are the helpful AI support assistant for DAANL. Keep answers brief and friendly."
             },
             ...chatHistory,
             { role: "user", content: userText }
@@ -287,6 +275,7 @@ export default function Workspace() {
           >
             <div className="p-6">
               <div className="flex items-center justify-between mb-10">
+                {/* UPDATED LOGO TO JPEG */}
                 <img src="/logo.jpeg" alt="Logo" className="h-6 cursor-pointer" onClick={handleExit} />
                 <button onClick={() => setIsSidebarOpen(false)} className="p-1 rounded-md text-slate-400 hover:bg-[#F1F5F9] hover:text-black transition">
                   <ChevronLeft className="w-5 h-5" />
@@ -309,9 +298,15 @@ export default function Workspace() {
         
         {/* TOP BAR */}
         <div className="h-16 border-b border-[#E2E8F0] flex items-center justify-between px-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 print:hidden">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            
+            {/* MOBILE BACK BUTTON */}
+            <button onClick={handleExit} className="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-[#F1F5F9] hover:text-black transition md:hidden">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+
             {!isSidebarOpen && (
-              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg text-slate-500 hover:bg-[#F1F5F9] hover:text-black transition">
+              <button onClick={() => setIsSidebarOpen(true)} className="p-2 rounded-lg text-slate-500 hover:bg-[#F1F5F9] hover:text-black transition hidden md:block">
                 <Menu className="w-5 h-5" />
               </button>
             )}
@@ -356,7 +351,6 @@ export default function Workspace() {
                   <p className="text-sm text-slate-500">Calculating standard deviations, variances, and generating tailored insights.</p>
                 </div>
               ) : (
-                // REPORT CONTAINER STARTS HERE
                 <div ref={reportRef} className="space-y-6 bg-[#F8FAFC] p-2 print:p-0">
                   
                   {/* HEADER & DOWNLOAD BUTTON */}
