@@ -9,13 +9,20 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "framer-motion": "^14.7.1",
+    "lucide-react": "^1.63.0",
     "next": "16.4.3",
+    "papaparse": "^5.7.0",
+    "plotly.js": "^4.2.0",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "react-plotly.js": "^4.1.0"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
+    "@types/plotly.js": "^3.0.15",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
