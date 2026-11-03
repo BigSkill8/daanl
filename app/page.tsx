@@ -70,7 +70,7 @@ export default function LandingPage() {
             </h1>
             <div className="mt-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
               <p className="max-w-md text-gray-600 dark:text-gray-400 text-lg md:text-xl font-medium">
-                We're not just an analytics tool. Turn your messy Excel and PDF files into intelligent, interactive insights.
+                We're not just an analytics tool. Turn your messy data csv files into intelligent, interactive insights.
               </p>
               <button onClick={() => router.push("/workspace")} className="w-28 h-28 bg-black dark:bg-white text-white dark:text-black rounded-full flex flex-col items-center justify-center text-xs font-bold uppercase tracking-wider cursor-pointer hover:scale-105 transition-transform shadow-xl">
                 <span>Start Now</span>
@@ -83,7 +83,7 @@ export default function LandingPage() {
           <motion.div initial={{ opacity: 0, y: 50 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <h2 className="text-3xl font-bold mb-12 border-b border-black/10 dark:border-white/10 pb-4 text-black dark:text-white">How it works.</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white dark:bg-[#1E293B] p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5"><UploadCloud className="w-10 h-10 mb-6 text-black dark:text-white" /><h3 className="text-xl font-bold mb-2 text-black dark:text-white">1. Upload File</h3><p className="text-gray-500 dark:text-gray-400">Drag and drop your CSV, Excel, or PDF file. We handle the extraction instantly.</p></div>
+              <div className="bg-white dark:bg-[#1E293B] p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5"><UploadCloud className="w-10 h-10 mb-6 text-black dark:text-white" /><h3 className="text-xl font-bold mb-2 text-black dark:text-white">1. Upload File</h3><p className="text-gray-500 dark:text-gray-400">Drag and drop your CSV file. We handle the extraction instantly.</p></div>
               <div className="bg-white dark:bg-[#1E293B] p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5"><Brain className="w-10 h-10 mb-6 text-black dark:text-white" /><h3 className="text-xl font-bold mb-2 text-black dark:text-white">2. AI Analyzes</h3><p className="text-gray-500 dark:text-gray-400">Our AI engine reads your columns, calculates KPIs, and finds hidden trends.</p></div>
               <div className="bg-white dark:bg-[#1E293B] p-8 rounded-3xl shadow-sm border border-black/5 dark:border-white/5"><LineChart className="w-10 h-10 mb-6 text-black dark:text-white" /><h3 className="text-xl font-bold mb-2 text-black dark:text-white">3. Get Charts</h3><p className="text-gray-500 dark:text-gray-400">Receive 5-6 interactive charts with clear, human-readable explanations.</p></div>
             </div>
